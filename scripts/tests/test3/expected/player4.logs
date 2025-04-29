@@ -1,0 +1,275 @@
+[INFO] [Client] Successfully connected to server at 127.0.0.1:2205
+[INFO] [Client ~> Server] Sending packet: type=JOIN
+[INFO] [Client ~> Server] Sending packet: type=READY
+[INFO] [INFO_PACKET] pot_size=0, player_turn=4, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CHECK
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=0, player_turn=1, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] pot_size=10, player_turn=4, dealer=1, bet_size=10
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=90, bet=10, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CALL
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=20, player_turn=4, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Community Card 0: 3d
+[INFO] [INFO_PACKET] Community Card 1: 3s
+[INFO] [INFO_PACKET] Community Card 2: 9s
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CHECK
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=20, player_turn=1, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Community Card 0: 3d
+[INFO] [INFO_PACKET] Community Card 1: 3s
+[INFO] [INFO_PACKET] Community Card 2: 9s
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] pot_size=20, player_turn=4, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Community Card 0: 3d
+[INFO] [INFO_PACKET] Community Card 1: 3s
+[INFO] [INFO_PACKET] Community Card 2: 9s
+[INFO] [INFO_PACKET] Community Card 3: Qc
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CHECK
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=20, player_turn=1, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Community Card 0: 3d
+[INFO] [INFO_PACKET] Community Card 1: 3s
+[INFO] [INFO_PACKET] Community Card 2: 9s
+[INFO] [INFO_PACKET] Community Card 3: Qc
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] pot_size=20, player_turn=4, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Community Card 0: 3d
+[INFO] [INFO_PACKET] Community Card 1: 3s
+[INFO] [INFO_PACKET] Community Card 2: 9s
+[INFO] [INFO_PACKET] Community Card 3: Qc
+[INFO] [INFO_PACKET] Community Card 4: Qh
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CHECK
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=20, player_turn=1, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 7d Ah
+[INFO] [INFO_PACKET] Community Card 0: 3d
+[INFO] [INFO_PACKET] Community Card 1: 3s
+[INFO] [INFO_PACKET] Community Card 2: 9s
+[INFO] [INFO_PACKET] Community Card 3: Qc
+[INFO] [INFO_PACKET] Community Card 4: Qh
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [END_PACKET] pot_size=20, winner=1, dealer=1
+[INFO] [END_PACKET] Community Card 0: 3d
+[INFO] [END_PACKET] Community Card 1: 3s
+[INFO] [END_PACKET] Community Card 2: 9s
+[INFO] [END_PACKET] Community Card 3: Qc
+[INFO] [END_PACKET] Community Card 4: Qh
+[INFO] [END_PACKET] Player 0 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 1 Final Stack=110, Cards: 2s Qs
+[INFO] [END_PACKET] Player 2 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 3 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 4 Final Stack=90, Cards: 7d Ah
+[INFO] [END_PACKET] Player 5 Final Stack=100, Cards:  
+[INFO] [Client ~> Server] Sending packet: type=READY
+[INFO] [INFO_PACKET] pot_size=0, player_turn=1, dealer=4, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 2c 5d
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=110, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] pot_size=0, player_turn=4, dealer=4, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 2c 5d
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=110, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CHECK
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=0, player_turn=1, dealer=4, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 2c 5d
+[INFO] [INFO_PACKET] Community Card 0: 6d
+[INFO] [INFO_PACKET] Community Card 1: 9d
+[INFO] [INFO_PACKET] Community Card 2: Kd
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=110, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] pot_size=10, player_turn=4, dealer=4, bet_size=10
+[INFO] [INFO_PACKET] Your Cards: 2c 5d
+[INFO] [INFO_PACKET] Community Card 0: 6d
+[INFO] [INFO_PACKET] Community Card 1: 9d
+[INFO] [INFO_PACKET] Community Card 2: Kd
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=10, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CALL
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=20, player_turn=1, dealer=4, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 2c 5d
+[INFO] [INFO_PACKET] Community Card 0: 6d
+[INFO] [INFO_PACKET] Community Card 1: 9d
+[INFO] [INFO_PACKET] Community Card 2: Kd
+[INFO] [INFO_PACKET] Community Card 3: Ad
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=80, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] pot_size=20, player_turn=4, dealer=4, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 2c 5d
+[INFO] [INFO_PACKET] Community Card 0: 6d
+[INFO] [INFO_PACKET] Community Card 1: 9d
+[INFO] [INFO_PACKET] Community Card 2: Kd
+[INFO] [INFO_PACKET] Community Card 3: Ad
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=80, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CHECK
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=20, player_turn=1, dealer=4, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 2c 5d
+[INFO] [INFO_PACKET] Community Card 0: 6d
+[INFO] [INFO_PACKET] Community Card 1: 9d
+[INFO] [INFO_PACKET] Community Card 2: Kd
+[INFO] [INFO_PACKET] Community Card 3: Ad
+[INFO] [INFO_PACKET] Community Card 4: 2s
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=80, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] pot_size=20, player_turn=4, dealer=4, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: 2c 5d
+[INFO] [INFO_PACKET] Community Card 0: 6d
+[INFO] [INFO_PACKET] Community Card 1: 9d
+[INFO] [INFO_PACKET] Community Card 2: Kd
+[INFO] [INFO_PACKET] Community Card 3: Ad
+[INFO] [INFO_PACKET] Community Card 4: 2s
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=80, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CHECK
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [END_PACKET] pot_size=20, winner=4, dealer=4
+[INFO] [END_PACKET] Community Card 0: 6d
+[INFO] [END_PACKET] Community Card 1: 9d
+[INFO] [END_PACKET] Community Card 2: Kd
+[INFO] [END_PACKET] Community Card 3: Ad
+[INFO] [END_PACKET] Community Card 4: 2s
+[INFO] [END_PACKET] Player 0 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 1 Final Stack=100, Cards: 5h Kh
+[INFO] [END_PACKET] Player 2 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 3 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 4 Final Stack=100, Cards: 2c 5d
+[INFO] [END_PACKET] Player 5 Final Stack=100, Cards:  
+[INFO] [Client ~> Server] Sending packet: type=READY
+[INFO] [INFO_PACKET] pot_size=0, player_turn=4, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: Jc 4c
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=CHECK
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=0, player_turn=1, dealer=1, bet_size=0
+[INFO] [INFO_PACKET] Your Cards: Jc 4c
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] pot_size=5, player_turn=4, dealer=1, bet_size=5
+[INFO] [INFO_PACKET] Your Cards: Jc 4c
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=95, bet=5, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=100, bet=0, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [Client ~> Server] Sending packet: type=RAISE, param[0]=10
+[INFO] [Server ~> Client] Received response packet: type=ACK
+[INFO] [INFO_PACKET] pot_size=15, player_turn=1, dealer=1, bet_size=10
+[INFO] [INFO_PACKET] Your Cards: Jc 4c
+[INFO] [INFO_PACKET] Player 0: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 1: stack=95, bet=5, status=1
+[INFO] [INFO_PACKET] Player 2: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 3: stack=100, bet=0, status=2
+[INFO] [INFO_PACKET] Player 4: stack=90, bet=10, status=1
+[INFO] [INFO_PACKET] Player 5: stack=100, bet=0, status=2
+[INFO] [END_PACKET] pot_size=15, winner=4, dealer=1
+[INFO] [END_PACKET] Player 0 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 1 Final Stack=95, Cards: 5s 4h
+[INFO] [END_PACKET] Player 2 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 3 Final Stack=100, Cards:  
+[INFO] [END_PACKET] Player 4 Final Stack=105, Cards: Jc 4c
+[INFO] [END_PACKET] Player 5 Final Stack=100, Cards:  
+[INFO] [Client ~> Server] Sending packet: type=LEAVE

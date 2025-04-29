@@ -1,0 +1,14 @@
+ready
+raise 10
+check
+check
+check
+ready
+check
+raise 10
+check
+check
+ready
+raise 5
+fold
+leave

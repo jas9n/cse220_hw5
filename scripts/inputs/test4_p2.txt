@@ -1,0 +1,15 @@
+ready
+raise 5
+call
+check
+call
+fold
+ready
+check
+raise 6
+check
+call
+check
+raise 1
+check
+fold

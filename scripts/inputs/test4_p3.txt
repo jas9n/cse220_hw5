@@ -1,0 +1,11 @@
+ready
+call
+call
+check
+check
+call
+call
+fold
+ready
+raise 4
+fold

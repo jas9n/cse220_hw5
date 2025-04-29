@@ -1,0 +1,12 @@
+ready
+raise 10
+check
+raise 6
+call
+ready
+check
+raise 3
+raise 7
+check
+call
+raise 2
