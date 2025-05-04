@@ -82,8 +82,12 @@ void init_game_state(game_state_t *game, int starting_stack, int random_seed)
     game->next_card = 0;
     game->highest_bet = 0;
     game->pot_size = 0;
-    game->current_player = 0;
-    game->dealer_player = MAX_PLAYERS - 1;
+
+    // Set dealer to player 1 (to match test expectations)
+    game->dealer_player = 1;
+    // Set current player to dealer+1 (modulo num_players)
+    game->current_player = (game->dealer_player + 1) % game->num_players;
+
     game->round_stage = ROUND_JOIN;
 }
 

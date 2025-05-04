@@ -122,17 +122,7 @@ int main(int argc, char **argv)
                          card_name(ip->player_cards[0]),
                          card_name(ip->player_cards[1]));
 
-                // 3) player information first (before community cards)
-                for (int i = 0; i < MAX_PLAYERS; i++)
-                {
-                    log_info("[INFO] [INFO_PACKET] Player %d: stack=%d, bet=%d, status=%d",
-                             i,
-                             ip->player_stacks[i],
-                             ip->player_bets[i],
-                             ip->player_status[i]);
-                }
-
-                // 4) community cards last
+                // 3) community cards FIRST (to match client)
                 if (game.round_stage >= ROUND_FLOP)
                 {
                     int num_comm = 0;
@@ -157,6 +147,16 @@ int main(int argc, char **argv)
                                  i,
                                  card_name(ip->community_cards[i]));
                     }
+                }
+
+                // 4) player information AFTER community cards (to match client)
+                for (int i = 0; i < MAX_PLAYERS; i++)
+                {
+                    log_info("[INFO] [INFO_PACKET] Player %d: stack=%d, bet=%d, status=%d",
+                             i,
+                             ip->player_stacks[i],
+                             ip->player_bets[i],
+                             ip->player_status[i]);
                 }
 
                 // Finally send the packet
