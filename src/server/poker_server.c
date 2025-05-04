@@ -119,10 +119,13 @@ int main(int argc, char **argv)
             }
 
             // Check if we need to end the game
-            if (check_game_end(&game))
+            int lone_winner = server_bet(&game);
+
+            if (lone_winner != -1)
             {
                 server_end(&game);
                 reset_game_state(&game);
+                continue;
             }
             else
             {

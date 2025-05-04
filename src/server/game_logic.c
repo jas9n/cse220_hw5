@@ -478,17 +478,3 @@ int find_winner(game_state_t *game)
     }
     return best;
 }
-
-// Implement function to check if game should end
-int check_game_end(game_state_t *game)
-{
-    int active_players = 0;
-    for (int i = 0; i < game->num_players; i++)
-    {
-        if (game->player_status[i] == PLAYER_ACTIVE)
-        {
-            active_players++;
-        }
-    }
-    return active_players < 2;
-}
