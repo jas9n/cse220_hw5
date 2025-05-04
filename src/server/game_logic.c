@@ -251,25 +251,26 @@ int check_betting_end(game_state_t *game)
 
 void server_community(game_state_t *game)
 {
-    switch (game->round_stage)
-    {
-    case ROUND_FLOP:
-        printf("Dealing flop: %s %s %s\n",
-               card_name(game->community_cards[0]),
-               card_name(game->community_cards[1]),
-               card_name(game->community_cards[2]));
-        break;
-    case ROUND_TURN:
-        printf("Dealing turn: %s\n",
-               card_name(game->community_cards[3]));
-        break;
-    case ROUND_RIVER:
-        printf("Dealing river: %s\n",
-               card_name(game->community_cards[4]));
-        break;
-    default:
-        break;
-    }
+    // switch (game->round_stage)
+    // {
+    // case ROUND_FLOP:
+    //     printf("Dealing flop: %s %s %s\n",
+    //            card_name(game->community_cards[0]),
+    //            card_name(game->community_cards[1]),
+    //            card_name(game->community_cards[2]));
+    //     break;
+    // case ROUND_TURN:
+    //     printf("Dealing turn: %s\n",
+    //            card_name(game->community_cards[3]));
+    //     break;
+    // case ROUND_RIVER:
+    //     printf("Dealing river: %s\n",
+    //            card_name(game->community_cards[4]));
+    //     break;
+    // default:
+    //     break;
+    // }
+    (void)game;
 }
 
 void server_end(game_state_t *game)
