@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     log_init("SERVER");
     log_player_init(MAX_PLAYERS);
 
-    // Initialize game state
+    // Initialize game state (starting stack = 1000, use seed from command line or time)
     int seed = (argc >= 2) ? atoi(argv[1]) : (int)time(NULL);
     init_game_state(&game, 1000, seed);
 
@@ -64,30 +64,20 @@ int main(int argc, char **argv)
         }
     }
 
-    // JOIN stage: accept JOIN packets from all players
-    if (game.round_stage == ROUND_JOIN)
+    // JOIN phase: Accept connection for each expected player
+    for (int p = 0; p < MAX_PLAYERS; p++)
     {
-        client_packet_t pkt;
-        for (int p = 0; p < MAX_PLAYERS; p++)
+        int fd = accept(server_fds[p], NULL, NULL);
+        if (fd < 0)
         {
-            int fd = accept(server_fds[p], NULL, NULL);
-            if (fd < 0)
-            {
-                perror("accept");
-                exit(EXIT_FAILURE);
-            }
-            game.sockets[p] = fd;
-            game.player_status[p] = PLAYER_ACTIVE;
-            // Expect a JOIN packet; consider checking the return value of recv
-            if (recv(fd, &pkt, sizeof(pkt), 0) <= 0)
-            {
-                perror("recv");
-                exit(EXIT_FAILURE);
-            }
-            log_info("[INFO] [Client ~> Server] Received packet: type=JOIN");
+            perror("accept");
+            exit(EXIT_FAILURE);
         }
-        server_join(&game);
+        game.sockets[p] = fd;
+        game.player_status[p] = PLAYER_ACTIVE;
     }
+    // Receive JOIN packets from connected players
+    server_join(&game);
 
     // Main game loop
     while (1)
@@ -97,10 +87,11 @@ int main(int argc, char **argv)
         {
         case ROUND_INIT:
         {
-            int ready = server_ready(&game);
-            if (ready < 2)
+            // Rotate dealer, reset bets/pot, shuffle deck, and verify active players
+            int active = server_ready(&game);
+            if (active < 2)
             {
-                log_info("Not enough players to start");
+                log_info("Not enough active players. Shutting down.");
                 goto cleanup;
             }
             server_deal(&game);
@@ -113,41 +104,29 @@ int main(int argc, char **argv)
         case ROUND_TURN:
         case ROUND_RIVER:
         {
-            // Send updated info packets to all active players
+            // For every active player, send an INFO packet
             for (int p = 0; p < MAX_PLAYERS; p++)
             {
                 if (game.player_status[p] == PLAYER_LEFT)
                     continue;
                 server_packet_t sp;
                 build_info_packet(&game, p, &sp);
-                info_packet_t *ip = &sp.info;
-                log_info("[INFO] [INFO_PACKET] pot_size=%d, player_turn=%d, dealer=%d, bet_size=%d",
-                         ip->pot_size, ip->player_turn, ip->dealer, ip->bet_size);
-                log_info("[INFO] [INFO_PACKET] Your Cards: %s %s",
-                         card_name(ip->player_cards[0]),
-                         card_name(ip->player_cards[1]));
-                for (int j = 0; j < MAX_PLAYERS; j++)
-                {
-                    log_info("[INFO] [INFO_PACKET] Player %d: stack=%d, bet=%d, status=%d",
-                             j, ip->player_stacks[j], ip->player_bets[j], ip->player_status[j]);
-                }
-                for (int j = 0; j < MAX_COMMUNITY_CARDS; j++)
-                {
-                    log_info("[INFO] [INFO_PACKET] Community Card %d: %s",
-                             j, card_name(ip->community_cards[j]));
-                }
                 send(game.sockets[p], &sp, sizeof(sp), 0);
             }
 
-            // Run the betting round; if server_bet returns != -1, jump to showdown
-            int lone = server_bet(&game);
-            if (lone != -1)
+            // Betting round uses server_bet which relies on check_betting_end internally
+            int bet_result = server_bet(&game);
+            if (bet_result != -1)
+            {
+                // Special condition (e.g. one player remaining) – directly move to showdown
                 game.round_stage = ROUND_SHOWDOWN;
+            }
             else
             {
+                // Reveal next community card if available
                 server_community(&game);
                 if (game.round_stage < ROUND_RIVER)
-                    game.round_stage++;
+                    game.round_stage++; // Advances: PREFLOP -> FLOP -> TURN -> RIVER
                 else
                     game.round_stage = ROUND_SHOWDOWN;
             }
@@ -156,43 +135,29 @@ int main(int argc, char **argv)
 
         case ROUND_SHOWDOWN:
         {
-            int winner = find_winner(&game);
-            for (int p = 0; p < MAX_PLAYERS; p++)
-            {
-                if (game.player_status[p] == PLAYER_LEFT)
-                    continue;
-                server_packet_t sp;
-                build_end_packet(&game, winner, &sp);
-                end_packet_t *ep = &sp.end;
-                log_info("[INFO] [END_PACKET] pot_size=%d, winner=%d, dealer=%d",
-                         ep->pot_size, ep->winner, ep->dealer);
-                for (int j = 0; j < MAX_PLAYERS; j++)
-                {
-                    log_info("[INFO] [END_PACKET] Player %d Final Stack=%d, Cards: %s %s",
-                             j, ep->player_stacks[j],
-                             card_name(ep->player_cards[j][0]),
-                             card_name(ep->player_cards[j][1]));
-                }
-                send(game.sockets[p], &sp, sizeof(sp), 0);
-            }
+            // Determine winner, announce results via server_end, and then reset for next hand
+            server_end(&game);
             reset_game_state(&game);
-            game.round_stage = ROUND_INIT;
             break;
         }
 
         default:
-            fprintf(stderr, "Invalid game stage %d\n", game.round_stage);
+            log_info("Encountered invalid round stage. Shutting down.");
             goto cleanup;
         }
     }
 
 cleanup:
-    log_info("Cleaning up and shutting down server");
+    log_info("Cleaning up and shutting down server.");
     log_fini();
     for (int i = 0; i < NUM_PORTS; i++)
+    {
         close(server_fds[i]);
-    for (int i = 0; i < MAX_PLAYERS; i++)
-        if (game.sockets[i] >= 0)
-            close(game.sockets[i]);
+    }
+    for (int p = 0; p < MAX_PLAYERS; p++)
+    {
+        if (game.sockets[p] >= 0)
+            close(game.sockets[p]);
+    }
     return 0;
 }
