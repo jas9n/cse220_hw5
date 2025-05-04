@@ -106,9 +106,32 @@ void build_info_packet(game_state_t *game, player_id_t pid, server_packet_t *out
     }
 
     // Community cards
+    int num_comm = 0;
+    switch (game->round_stage)
+    {
+    case ROUND_FLOP:
+        num_comm = 3;
+        break;
+    case ROUND_TURN:
+        num_comm = 4;
+        break;
+    case ROUND_RIVER:
+        num_comm = 5;
+        break;
+    default:
+        num_comm = 0;
+        break;
+    }
     for (int i = 0; i < MAX_COMMUNITY_CARDS; i++)
     {
-        info->community_cards[i] = game->community_cards[i];
+        if (i < num_comm)
+        {
+            info->community_cards[i] = game->community_cards[i];
+        }
+        else
+        {
+            info->community_cards[i] = NOCARD;
+        }
     }
 
     // Stacks, bets, statuses
