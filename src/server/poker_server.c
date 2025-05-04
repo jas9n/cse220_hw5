@@ -113,16 +113,7 @@ int main(int argc, char **argv)
                 build_info_packet(&game, p, &sp);
                 info_packet_t *ip = &sp.info;
 
-                // 1) pot / turn / dealer / bet_size
-                log_info("[INFO] [INFO_PACKET] pot_size=%d, player_turn=%d, dealer=%d, bet_size=%d",
-                         ip->pot_size, ip->player_turn, ip->dealer, ip->bet_size);
-
-                // 2) your hole cards
-                log_info("[INFO] [INFO_PACKET] Your Cards: %s %s",
-                         card_name(ip->player_cards[0]),
-                         card_name(ip->player_cards[1]));
-
-                // 3) player information FIRST (before community cards)
+                // player info
                 for (int i = 0; i < MAX_PLAYERS; i++)
                 {
                     log_info("[INFO] [INFO_PACKET] Player %d: stack=%d, bet=%d, status=%d",
@@ -132,7 +123,16 @@ int main(int argc, char **argv)
                              ip->player_status[i]);
                 }
 
-                // 4) community cards LAST
+                // pot / turn / dealer / bet_size
+                log_info("[INFO] [INFO_PACKET] pot_size=%d, player_turn=%d, dealer=%d, bet_size=%d",
+                         ip->pot_size, ip->player_turn, ip->dealer, ip->bet_size);
+
+                // hole cards
+                log_info("[INFO] [INFO_PACKET] Your Cards: %s %s",
+                         card_name(ip->player_cards[0]),
+                         card_name(ip->player_cards[1]));
+
+                // community cards
                 if (game.round_stage >= ROUND_FLOP)
                 {
                     int num_comm = 0;
