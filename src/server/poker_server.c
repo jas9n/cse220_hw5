@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     // Main game loop
     while (1)
     {
-        print_game_state(&game);
+        // print_game_state(&game);
         switch (game.round_stage)
         {
         case ROUND_INIT:
