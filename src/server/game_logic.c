@@ -12,10 +12,15 @@
 // Feel free to add your own code. I stripped out most of our solution functions but I left some "breadcrumbs" for anyone lost
 
 // for debugging
-// void print_game_state(game_state_t *game)
-// {
-//     (void)game;
-// }
+void print_game_state(game_state_t *game)
+{
+    printf("[DEBUG] stage=%d  dealer=%d  turn=%d  pot=%d  high_bet=%d\n",
+           game->round_stage,
+           game->dealer_player,
+           game->current_player,
+           game->pot_size,
+           game->highest_bet);
+}
 
 void init_deck(card_t deck[DECK_SIZE], int seed)
 { // DO NOT TOUCH THIS FUNCTION
@@ -146,17 +151,22 @@ int server_bet(game_state_t *game)
 {
     // This was our function to determine if everyone has called or folded
 
-    int last_winner = -1;
     while (!check_betting_end(game))
     {
-        // Send INFO
+        // Send INFO packet to current player
         server_packet_t info_pkt;
         build_info_packet(game, game->current_player, &info_pkt);
         send(game->sockets[game->current_player], &info_pkt, sizeof(info_pkt), 0);
 
-        // Receive action
+        // Get action from current player
         client_packet_t in;
-        recv(game->sockets[game->current_player], &in, sizeof(in), 0);
+        if (recv(game->sockets[game->current_player], &in, sizeof(in), 0) <= 0)
+        {
+            // Handle disconnect
+            game->player_status[game->current_player] = PLAYER_LEFT;
+            continue;
+        }
+
         server_packet_t resp;
         if (handle_client_action(game, game->current_player, &in, &resp) == 0)
         {
@@ -164,35 +174,23 @@ int server_bet(game_state_t *game)
         }
         else
         {
-            // Invalid action: send NACK and retry
+            resp.packet_type = NACK;
             send(game->sockets[game->current_player], &resp, sizeof(resp), 0);
             continue;
         }
 
-        // Advance to next active
+        // Move to next active player
         int next = (game->current_player + 1) % game->num_players;
         while (game->player_status[next] != PLAYER_ACTIVE)
         {
             next = (next + 1) % game->num_players;
+            if (next == game->current_player)
+                break;
         }
         game->current_player = next;
-
-        // Check for single remaining
-        int active_count = 0;
-        for (int i = 0; i < game->num_players; i++)
-        {
-            if (game->player_status[i] == PLAYER_ACTIVE)
-            {
-                active_count++;
-                last_winner = i;
-            }
-        }
-        if (active_count == 1)
-        {
-            return last_winner;
-        }
     }
-    return -1;
+
+    return 0;
 }
 
 // Returns 1 if all bets are the same among active players
@@ -240,21 +238,186 @@ void server_end(game_state_t *game)
 {
     // This function sends the end packet
     int winner = find_winner(game);
+
+    // Update winner's stack with pot
+    if (winner >= 0)
+    {
+        game->player_stacks[winner] += game->pot_size;
+    }
+
     server_packet_t end_pkt;
+    build_end_packet(game, winner, &end_pkt);
+
+    // Send END packet to all active players
     for (int i = 0; i < game->num_players; i++)
     {
-        build_end_packet(game, winner, &end_pkt);
-        send(game->sockets[i], &end_pkt, sizeof(end_pkt), 0);
+        if (game->player_status[i] != PLAYER_LEFT)
+        {
+            send(game->sockets[i], &end_pkt, sizeof(end_pkt), 0);
+        }
+    }
+}
+
+// Helper function to sort cards by rank
+static void sort_cards(card_t cards[], int n)
+{
+    for (int i = 0; i < n - 1; i++)
+    {
+        for (int j = 0; j < n - i - 1; j++)
+        {
+            if (RANK(cards[j]) > RANK(cards[j + 1]))
+            {
+                card_t temp = cards[j];
+                cards[j] = cards[j + 1];
+                cards[j + 1] = temp;
+            }
+        }
     }
 }
 
 int evaluate_hand(game_state_t *game, player_id_t pid)
 {
-    // We wrote a function to compare a "value" for each players hand (to make comparison easier)
-    // Feel free to not do this.
-    (void)game;
-    (void)pid;
-    return 0;
+    card_t cards[7]; // 2 hole cards + 5 community cards
+    int num_cards = 0;
+
+    // Collect hole cards
+    for (int i = 0; i < HAND_SIZE; i++)
+    {
+        if (game->player_hands[pid][i] != NOCARD)
+        {
+            cards[num_cards++] = game->player_hands[pid][i];
+        }
+    }
+
+    // Collect community cards
+    for (int i = 0; i < MAX_COMMUNITY_CARDS; i++)
+    {
+        if (game->community_cards[i] != NOCARD)
+        {
+            cards[num_cards++] = game->community_cards[i];
+        }
+    }
+
+    if (num_cards < 5)
+        return 0; // Not enough cards for evaluation
+
+    sort_cards(cards, num_cards);
+
+    // Check for straight flush
+    for (int i = num_cards - 5; i >= 0; i--)
+    {
+        int straight = 1;
+        int flush = 1;
+        int base_suite = SUITE(cards[i]);
+
+        for (int j = 1; j < 5; j++)
+        {
+            if (RANK(cards[i + j]) != RANK(cards[i + j - 1]) + 1)
+                straight = 0;
+            if (SUITE(cards[i + j]) != base_suite)
+                flush = 0;
+        }
+
+        if (straight && flush)
+            return 9000000 + RANK(cards[i + 4]);
+    }
+
+    // Check for four of a kind
+    for (int i = 0; i <= num_cards - 4; i++)
+    {
+        if (RANK(cards[i]) == RANK(cards[i + 1]) &&
+            RANK(cards[i]) == RANK(cards[i + 2]) &&
+            RANK(cards[i]) == RANK(cards[i + 3]))
+        {
+            return 8000000 + RANK(cards[i]);
+        }
+    }
+
+    // Check for full house
+    for (int i = num_cards - 1; i >= 2; i--)
+    {
+        if (RANK(cards[i]) == RANK(cards[i - 1]) &&
+            RANK(cards[i]) == RANK(cards[i - 2]))
+        {
+            for (int j = 0; j < num_cards - 1; j++)
+            {
+                if (RANK(cards[j]) == RANK(cards[j + 1]) &&
+                    RANK(cards[j]) != RANK(cards[i]))
+                {
+                    return 7000000 + RANK(cards[i]) * 100 + RANK(cards[j]);
+                }
+            }
+        }
+    }
+
+    // Check for flush
+    for (int suite = 0; suite < 4; suite++)
+    {
+        int count = 0;
+        int highest = 0;
+        for (int i = 0; i < num_cards; i++)
+        {
+            if (SUITE(cards[i]) == suite)
+            {
+                count++;
+                if (RANK(cards[i]) > highest)
+                {
+                    highest = RANK(cards[i]);
+                }
+            }
+        }
+        if (count >= 5)
+            return 6000000 + highest;
+    }
+
+    // Check for straight
+    for (int i = num_cards - 5; i >= 0; i--)
+    {
+        if (RANK(cards[i + 4]) == RANK(cards[i + 3]) + 1 &&
+            RANK(cards[i + 3]) == RANK(cards[i + 2]) + 1 &&
+            RANK(cards[i + 2]) == RANK(cards[i + 1]) + 1 &&
+            RANK(cards[i + 1]) == RANK(cards[i]) + 1)
+        {
+            return 5000000 + RANK(cards[i + 4]);
+        }
+    }
+
+    // Check for three of a kind
+    for (int i = num_cards - 1; i >= 2; i--)
+    {
+        if (RANK(cards[i]) == RANK(cards[i - 1]) &&
+            RANK(cards[i]) == RANK(cards[i - 2]))
+        {
+            return 4000000 + RANK(cards[i]);
+        }
+    }
+
+    // Check for two pair
+    for (int i = num_cards - 1; i >= 1; i--)
+    {
+        if (RANK(cards[i]) == RANK(cards[i - 1]))
+        {
+            for (int j = i - 2; j >= 1; j--)
+            {
+                if (RANK(cards[j]) == RANK(cards[j - 1]))
+                {
+                    return 3000000 + RANK(cards[i]) * 100 + RANK(cards[j]);
+                }
+            }
+        }
+    }
+
+    // Check for one pair
+    for (int i = num_cards - 1; i >= 1; i--)
+    {
+        if (RANK(cards[i]) == RANK(cards[i - 1]))
+        {
+            return 2000000 + RANK(cards[i]);
+        }
+    }
+
+    // High card
+    return 1000000 + RANK(cards[num_cards - 1]);
 }
 
 int find_winner(game_state_t *game)
@@ -274,4 +437,18 @@ int find_winner(game_state_t *game)
         }
     }
     return best;
+}
+
+// Implement function to check if game should end
+int check_game_end(game_state_t *game)
+{
+    int active_players = 0;
+    for (int i = 0; i < game->num_players; i++)
+    {
+        if (game->player_status[i] == PLAYER_ACTIVE)
+        {
+            active_players++;
+        }
+    }
+    return active_players < 2;
 }

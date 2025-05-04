@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <time.h>
 
 #include "poker_client.h"
 #include "client_action_handler.h"
@@ -19,124 +20,133 @@ typedef struct
     struct sockaddr_in address;
 } player_t;
 
-game_state_t game; // global variable to store our game state info (this is a huge hint for you)
+game_state_t game;
 
 int main(int argc, char **argv)
 {
-    int server_fds[NUM_PORTS], client_socket, player_count = 0;
+    int server_fds[NUM_PORTS], client_socket;
     int opt = 1;
     struct sockaddr_in server_address;
     player_t players[MAX_PLAYERS];
     char buffer[BUFFER_SIZE] = {0};
     socklen_t addrlen = sizeof(struct sockaddr_in);
 
-    // Setup the server infrastructre and accept the 6 players on ports 2201, 2202, 2203, 2204, 2205, 2206
+    // Initialize server sockets
     for (int i = 0; i < NUM_PORTS; i++)
     {
-        int fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (fd < 0)
+        server_fds[i] = socket(AF_INET, SOCK_STREAM, 0);
+        if (server_fds[i] < 0)
         {
-            perror("socket");
+            perror("Socket creation failed");
             exit(EXIT_FAILURE);
         }
 
-        struct sockaddr_in addr = {0};
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = INADDR_ANY;
-        addr.sin_port = htons(BASE_PORT + i);
-
-        if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        // Set socket options
+        if (setsockopt(server_fds[i], SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
         {
-            perror("bind");
+            perror("Setsockopt failed");
             exit(EXIT_FAILURE);
         }
 
-        if (listen(fd, 1) < 0)
+        // Configure server address
+        memset(&server_address, 0, sizeof(server_address));
+        server_address.sin_family = AF_INET;
+        server_address.sin_addr.s_addr = INADDR_ANY;
+        server_address.sin_port = htons(BASE_PORT + i);
+
+        // Bind socket
+        if (bind(server_fds[i], (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
         {
-            perror("listen");
+            perror("Bind failed");
             exit(EXIT_FAILURE);
         }
-        server_fds[i] = fd;
+
+        // Listen for connections
+        if (listen(server_fds[i], 1) < 0)
+        {
+            perror("Listen failed");
+            exit(EXIT_FAILURE);
+        }
     }
 
-    int rand_seed = argc == 2 ? atoi(argv[1]) : 0;
-    init_game_state(&game, 100, rand_seed);
+    // Initialize game state
+    int rand_seed = argc == 2 ? atoi(argv[1]) : time(NULL);
+    init_game_state(&game, 1000, rand_seed); // Starting stack of 1000
 
-    // Join state?
-    for (int pid = 0; pid < MAX_PLAYERS; pid++)
+    // Accept initial connections
+    for (int i = 0; i < NUM_PORTS; i++)
     {
-        int client_fd = accept(server_fds[pid], NULL, NULL);
-        if (client_fd < 0)
+        client_socket = accept(server_fds[i], (struct sockaddr *)&players[i].address, &addrlen);
+        if (client_socket < 0)
         {
-            perror("accept");
-            exit(EXIT_FAILURE);
+            perror("Accept failed");
+            continue;
         }
-        game.sockets[pid] = client_fd;
-        game.player_status[pid] = PLAYER_ACTIVE;
-        // read JOIN packet from client
-        client_packet_t pkt;
-        recv(client_fd, &pkt, sizeof(pkt), 0);
-        // validate pkt.packet_type == JOIN
+        game.sockets[i] = client_socket;
+        game.player_status[i] = PLAYER_ACTIVE;
     }
 
-    game.num_players = MAX_PLAYERS;
-    game.round_stage = ROUND_INIT;
-
+    // Main game loop
     while (1)
     {
         switch (game.round_stage)
         {
         case ROUND_JOIN:
-            game.round_stage = ROUND_INIT;
+            server_join(&game);
             break;
+
         case ROUND_INIT:
-            server_ready(&game);
+            if (server_ready(&game) < 2)
+            {
+                // Not enough players - send HALT
+                server_packet_t halt_pkt = {.packet_type = HALT};
+                for (int i = 0; i < game.num_players; i++)
+                {
+                    if (game.player_status[i] != PLAYER_LEFT)
+                    {
+                        send(game.sockets[i], &halt_pkt, sizeof(halt_pkt), 0);
+                    }
+                }
+                goto cleanup;
+            }
             server_deal(&game);
-            game.round_stage = ROUND_PREFLOP;
             break;
 
         case ROUND_PREFLOP:
-            server_bet(&game);
-            server_community(&game); // flop
-            game.round_stage = ROUND_FLOP;
-            break;
-
         case ROUND_FLOP:
-            server_bet(&game);
-            server_community(&game); // turn
-            game.round_stage = ROUND_TURN;
-            break;
-
         case ROUND_TURN:
-            server_bet(&game);
-            server_community(&game); // river
-            game.round_stage = ROUND_RIVER;
-            break;
-
         case ROUND_RIVER:
-            server_bet(&game);
-            game.round_stage = ROUND_SHOWDOWN;
+            if (server_bet(&game) < 0)
+            {
+                goto cleanup;
+            }
+            server_community(&game);
+            if (game.round_stage == ROUND_RIVER)
+            {
+                game.round_stage = ROUND_SHOWDOWN;
+            }
             break;
 
         case ROUND_SHOWDOWN:
             server_end(&game);
             reset_game_state(&game);
-            game.round_stage = ROUND_INIT;
             break;
+
+        default:
+            fprintf(stderr, "Invalid game stage\n");
+            goto cleanup;
         }
     }
 
-    printf("[Server] Shutting down.\n");
-
-    // Close all fds (you're welcome)
-    for (int i = 0; i < MAX_PLAYERS; i++)
+cleanup:
+    // Close all sockets
+    for (int i = 0; i < NUM_PORTS; i++)
     {
         close(server_fds[i]);
-        if (game.player_status[i] != PLAYER_LEFT)
+        if (game.sockets[i] > 0)
         {
             close(game.sockets[i]);
         }
     }
-
     return 0;
 }

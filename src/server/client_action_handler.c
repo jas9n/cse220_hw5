@@ -20,6 +20,13 @@ int handle_client_action(game_state_t *game, player_id_t pid, const client_packe
 {
     // Optional function, see documentation above. Strongly reccomended.
     // Ensure it's this player's turn
+    if (!game || !in || !out || pid >= MAX_PLAYERS || pid < 0)
+    {
+        if (out)
+            out->packet_type = NACK;
+        return -1;
+    }
+
     if (pid != game->current_player)
     {
         out->packet_type = NACK;
