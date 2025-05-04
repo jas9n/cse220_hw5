@@ -174,9 +174,19 @@ int main(int argc, char **argv)
                 // Reveal next community card if available
                 server_community(&game);
                 if (game.round_stage < ROUND_RIVER)
-                    game.round_stage++; // Advances: PREFLOP -> FLOP -> TURN -> RIVER
+                {
+                    game.round_stage++;
+                    int fp = (game.dealer_player + 1) % game.num_players;
+                    while (game.player_status[fp] != PLAYER_ACTIVE)
+                    {
+                        fp = (fp + 1) % game.num_players;
+                    }
+                    game.current_player = fp;
+                }
                 else
+                {
                     game.round_stage = ROUND_SHOWDOWN;
+                }
             }
             break;
         }
