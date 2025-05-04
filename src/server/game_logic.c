@@ -128,11 +128,12 @@ void server_join(game_state_t *game)
 
 int server_ready(game_state_t *game)
 {
-    // Only rotate dealer if not the very first hand
-    if (game->round_stage != ROUND_JOIN)
+    static int first_hand = 1;
+    if (!first_hand)
     {
         game->dealer_player = (game->dealer_player + 1) % game->num_players;
     }
+    first_hand = 0;
 
     // Count active players
     int ready_count = 0;
