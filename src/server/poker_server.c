@@ -31,6 +31,10 @@ int main(int argc, char **argv)
     char buffer[BUFFER_SIZE] = {0};
     socklen_t addrlen = sizeof(struct sockaddr_in);
 
+    // Initialize game state
+    int rand_seed = argc == 2 ? atoi(argv[1]) : time(NULL);
+    init_game_state(&game, 1000, rand_seed);
+
     // Initialize server sockets
     for (int i = 0; i < NUM_PORTS; i++)
     {
@@ -41,27 +45,23 @@ int main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
 
-        // Set socket options
         if (setsockopt(server_fds[i], SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
         {
             perror("Setsockopt failed");
             exit(EXIT_FAILURE);
         }
 
-        // Configure server address
         memset(&server_address, 0, sizeof(server_address));
         server_address.sin_family = AF_INET;
         server_address.sin_addr.s_addr = INADDR_ANY;
         server_address.sin_port = htons(BASE_PORT + i);
 
-        // Bind socket
         if (bind(server_fds[i], (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
         {
             perror("Bind failed");
             exit(EXIT_FAILURE);
         }
 
-        // Listen for connections
         if (listen(server_fds[i], 1) < 0)
         {
             perror("Listen failed");
@@ -69,26 +69,29 @@ int main(int argc, char **argv)
         }
     }
 
-    // Initialize game state
-    int rand_seed = argc == 2 ? atoi(argv[1]) : time(NULL);
-    init_game_state(&game, 1000, rand_seed); // Starting stack of 1000
-
-    // Accept initial connections
-    for (int i = 0; i < NUM_PORTS; i++)
-    {
-        client_socket = accept(server_fds[i], (struct sockaddr *)&players[i].address, &addrlen);
-        if (client_socket < 0)
-        {
-            perror("Accept failed");
-            continue;
-        }
-        game.sockets[i] = client_socket;
-        game.player_status[i] = PLAYER_ACTIVE;
-    }
+    printf("Server initialized. Waiting for connections...\n");
 
     // Main game loop
     while (1)
     {
+        // Handle initial connections if needed
+        if (game.round_stage == ROUND_JOIN)
+        {
+            for (int i = 0; i < NUM_PORTS; i++)
+            {
+                client_socket = accept(server_fds[i], (struct sockaddr *)&players[i].address, &addrlen);
+                if (client_socket < 0)
+                {
+                    perror("Accept failed");
+                    continue;
+                }
+                game.sockets[i] = client_socket;
+                game.player_status[i] = PLAYER_ACTIVE;
+                printf("Player %d connected\n", i);
+            }
+        }
+
+        // Game state machine
         switch (game.round_stage)
         {
         case ROUND_JOIN:
@@ -98,18 +101,11 @@ int main(int argc, char **argv)
         case ROUND_INIT:
             if (server_ready(&game) < 2)
             {
-                // Not enough players - send HALT
-                server_packet_t halt_pkt = {.packet_type = HALT};
-                for (int i = 0; i < game.num_players; i++)
-                {
-                    if (game.player_status[i] != PLAYER_LEFT)
-                    {
-                        send(game.sockets[i], &halt_pkt, sizeof(halt_pkt), 0);
-                    }
-                }
+                printf("Not enough players to start game\n");
                 goto cleanup;
             }
             server_deal(&game);
+            game.round_stage = ROUND_PREFLOP;
             break;
 
         case ROUND_PREFLOP:
@@ -118,12 +114,23 @@ int main(int argc, char **argv)
         case ROUND_RIVER:
             if (server_bet(&game) < 0)
             {
+                printf("Betting round failed\n");
                 goto cleanup;
             }
-            server_community(&game);
-            if (game.round_stage == ROUND_RIVER)
+
+            // Check if we need to end the game
+            if (check_game_end(&game))
             {
-                game.round_stage = ROUND_SHOWDOWN;
+                server_end(&game);
+                reset_game_state(&game);
+            }
+            else
+            {
+                server_community(&game);
+                if (game.round_stage == ROUND_RIVER)
+                {
+                    game.round_stage = ROUND_SHOWDOWN;
+                }
             }
             break;
 
@@ -136,17 +143,29 @@ int main(int argc, char **argv)
             fprintf(stderr, "Invalid game stage\n");
             goto cleanup;
         }
+
+        print_game_state(&game); // Debug output
     }
 
 cleanup:
+    printf("Cleaning up and shutting down server...\n");
+    // Send HALT packets to remaining players
+    server_packet_t halt_pkt = {.packet_type = HALT};
+    for (int i = 0; i < game.num_players; i++)
+    {
+        if (game.player_status[i] != PLAYER_LEFT)
+        {
+            send(game.sockets[i], &halt_pkt, sizeof(halt_pkt), 0);
+        }
+    }
+
     // Close all sockets
     for (int i = 0; i < NUM_PORTS; i++)
     {
-        close(server_fds[i]);
-        if (game.sockets[i] > 0)
-        {
+        if (server_fds[i] >= 0)
+            close(server_fds[i]);
+        if (game.sockets[i] >= 0)
             close(game.sockets[i]);
-        }
     }
     return 0;
 }

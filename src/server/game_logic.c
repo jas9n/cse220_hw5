@@ -14,12 +14,33 @@
 // for debugging
 void print_game_state(game_state_t *game)
 {
-    printf("[DEBUG] stage=%d  dealer=%d  turn=%d  pot=%d  high_bet=%d\n",
-           game->round_stage,
-           game->dealer_player,
-           game->current_player,
-           game->pot_size,
-           game->highest_bet);
+    printf("\n=== Game State ===\n");
+    printf("Community cards: ");
+    for (int i = 0; i < MAX_COMMUNITY_CARDS; i++)
+    {
+        if (game->community_cards[i] != NOCARD)
+        {
+            printf("%s ", card_name(game->community_cards[i]));
+        }
+    }
+    printf("\n");
+
+    for (int i = 0; i < game->num_players; i++)
+    {
+        if (game->player_status[i] != PLAYER_LEFT)
+        {
+            printf("Player %d: ", i);
+            printf("Cards [%s %s] ",
+                   card_name(game->player_hands[i][0]),
+                   card_name(game->player_hands[i][1]));
+            printf("Stack: %d Bet: %d Status: %d\n",
+                   game->player_stacks[i],
+                   game->current_bets[i],
+                   game->player_status[i]);
+        }
+    }
+    printf("Pot: %d Current bet: %d\n", game->pot_size, game->highest_bet);
+    printf("=================\n\n");
 }
 
 void init_deck(card_t deck[DECK_SIZE], int seed)
@@ -137,14 +158,29 @@ int server_ready(game_state_t *game)
 // This was our dealing function with some of the code removed (I left the dealing so we have the same logic)
 void server_deal(game_state_t *game)
 {
-    for (int i = 0; i < MAX_PLAYERS; i++)
+    int card_index = game->next_card;
+
+    // Deal 2 cards to each active player
+    for (int i = 0; i < game->num_players; i++)
     {
         if (game->player_status[i] == PLAYER_ACTIVE)
         {
-            game->player_hands[i][0] = game->deck[game->next_card++];
-            game->player_hands[i][1] = game->deck[game->next_card++];
+            for (int j = 0; j < HAND_SIZE; j++)
+            {
+                game->player_hands[i][j] = game->deck[card_index++];
+                printf("Dealt %s to player %d\n",
+                       card_name(game->player_hands[i][j]), i);
+            }
         }
     }
+
+    // Store remaining cards for community cards
+    for (int i = 0; i < MAX_COMMUNITY_CARDS; i++)
+    {
+        game->community_cards[i] = game->deck[card_index++];
+    }
+
+    game->next_card = card_index;
 }
 
 int server_bet(game_state_t *game)
@@ -209,25 +245,21 @@ int check_betting_end(game_state_t *game)
 
 void server_community(game_state_t *game)
 {
-    // This function checked the game state and dealt new community cards if needed;
     switch (game->round_stage)
     {
-    case ROUND_PREFLOP:
-        // flop: 3 cards
-        game->community_cards[0] = game->deck[game->next_card++];
-        game->community_cards[1] = game->deck[game->next_card++];
-        game->community_cards[2] = game->deck[game->next_card++];
-        game->round_stage = ROUND_FLOP;
-        break;
     case ROUND_FLOP:
-        // turn: 1 card
-        game->community_cards[3] = game->deck[game->next_card++];
-        game->round_stage = ROUND_TURN;
+        printf("Dealing flop: %s %s %s\n",
+               card_name(game->community_cards[0]),
+               card_name(game->community_cards[1]),
+               card_name(game->community_cards[2]));
         break;
     case ROUND_TURN:
-        // river: 1 card
-        game->community_cards[4] = game->deck[game->next_card++];
-        game->round_stage = ROUND_RIVER;
+        printf("Dealing turn: %s\n",
+               card_name(game->community_cards[3]));
+        break;
+    case ROUND_RIVER:
+        printf("Dealing river: %s\n",
+               card_name(game->community_cards[4]));
         break;
     default:
         break;
@@ -236,19 +268,27 @@ void server_community(game_state_t *game)
 
 void server_end(game_state_t *game)
 {
-    // This function sends the end packet
     int winner = find_winner(game);
-
-    // Update winner's stack with pot
+    printf("\n=== Game Over ===\n");
     if (winner >= 0)
     {
+        printf("Player %d wins with hand: ", winner);
+        for (int i = 0; i < HAND_SIZE; i++)
+        {
+            printf("%s ", card_name(game->player_hands[winner][i]));
+        }
+        printf("\nCommunity cards: ");
+        for (int i = 0; i < MAX_COMMUNITY_CARDS; i++)
+        {
+            printf("%s ", card_name(game->community_cards[i]));
+        }
+        printf("\nWinning pot: %d\n", game->pot_size);
         game->player_stacks[winner] += game->pot_size;
     }
 
     server_packet_t end_pkt;
     build_end_packet(game, winner, &end_pkt);
 
-    // Send END packet to all active players
     for (int i = 0; i < game->num_players; i++)
     {
         if (game->player_status[i] != PLAYER_LEFT)
