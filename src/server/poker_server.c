@@ -34,9 +34,8 @@ int main(int argc, char **argv)
     log_init("SERVER");
     log_player_init(MAX_PLAYERS);
 
-    // Initialize game state (starting stack = 1000, use seed from command line or time)
     int seed = (argc >= 2) ? atoi(argv[1]) : (int)time(NULL);
-    init_game_state(&game, 1000, seed);
+    init_game_state(&game, 100, seed);
 
     // Set up listening sockets on NUM_PORTS
     for (int i = 0; i < NUM_PORTS; i++)

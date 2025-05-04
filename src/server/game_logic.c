@@ -201,7 +201,7 @@ int server_bet(game_state_t *game)
         if (rv <= 0)
         {
             // Instead of erroring out, simulate a CHECK action
-            log_info("[INFO] [Client ~> Server] Sending packet: type=CHECK");
+            // log_info("[INFO] [Client ~> Server] Sending packet: type=CHECK");
             in.packet_type = CHECK;
         }
 
