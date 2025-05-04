@@ -128,10 +128,11 @@ void server_join(game_state_t *game)
 
 int server_ready(game_state_t *game)
 {
-    // This function updated the dealer and checked ready/leave status for all players
-
-    // Rotate dealer
-    game->dealer_player = (game->dealer_player + 1) % game->num_players;
+    // Only rotate dealer if not the very first hand
+    if (game->round_stage != ROUND_JOIN)
+    {
+        game->dealer_player = (game->dealer_player + 1) % game->num_players;
+    }
 
     // Count active players
     int ready_count = 0;
