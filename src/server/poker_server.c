@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 
             // Betting round uses server_bet which relies on check_betting_end internally
             int bet_result = server_bet(&game);
-            if (bet_result != -1)
+            if (bet_result == -1)
             {
                 // Special condition (e.g. one player remaining) – directly move to showdown
                 game.round_stage = ROUND_SHOWDOWN;
