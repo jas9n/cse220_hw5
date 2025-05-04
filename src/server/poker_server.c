@@ -108,8 +108,55 @@ int main(int argc, char **argv)
             {
                 if (game.player_status[p] == PLAYER_LEFT)
                     continue;
+
                 server_packet_t sp;
                 build_info_packet(&game, p, &sp);
+                info_packet_t *ip = &sp.info;
+
+                // 1) pot / turn / dealer / bet_size
+                log_info("[INFO] [INFO_PACKET] pot_size=%d, player_turn=%d, dealer=%d, bet_size=%d",
+                         ip->pot_size, ip->player_turn, ip->dealer, ip->bet_size);
+
+                // 2) your hole cards
+                log_info("[INFO] [INFO_PACKET] Your Cards: %s %s",
+                         card_name(ip->player_cards[0]),
+                         card_name(ip->player_cards[1]));
+
+                // 3) each player’s stack / bet / status
+                for (int i = 0; i < MAX_PLAYERS; i++)
+                {
+                    log_info("[INFO] [INFO_PACKET] Player %d: stack=%d, bet=%d, status=%d",
+                             i,
+                             ip->player_stacks[i],
+                             ip->player_bets[i],
+                             ip->player_status[i]);
+                }
+
+                // 4) community cards, but only as many as have been dealt
+                int num_comm = 0;
+                switch (game.round_stage)
+                {
+                case ROUND_FLOP:
+                    num_comm = 3;
+                    break;
+                case ROUND_TURN:
+                    num_comm = 4;
+                    break;
+                case ROUND_RIVER:
+                    num_comm = 5;
+                    break;
+                default:
+                    num_comm = 0;
+                    break;
+                }
+                for (int i = 0; i < num_comm; i++)
+                {
+                    log_info("[INFO] [INFO_PACKET] Community Card %d: %s",
+                             i,
+                             card_name(ip->community_cards[i]));
+                }
+
+                // finally send the packet
                 send(game.sockets[p], &sp, sizeof(sp), 0);
             }
 
