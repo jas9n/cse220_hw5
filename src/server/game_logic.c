@@ -156,7 +156,7 @@ int server_ready(game_state_t *game)
 
     // Advance to dealing stage
     game->round_stage = ROUND_PREFLOP;
-    game->current_player = (game->dealer_player + 1) % game->num_players;
+    game->current_player = (game->dealer_player + 2) % game->num_players;
     return ready_count;
 }
 
