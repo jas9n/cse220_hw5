@@ -122,7 +122,7 @@ int main(int argc, char **argv)
                          card_name(ip->player_cards[0]),
                          card_name(ip->player_cards[1]));
 
-                // 3) each player’s stack / bet / status
+                // 3) player information first (before community cards)
                 for (int i = 0; i < MAX_PLAYERS; i++)
                 {
                     log_info("[INFO] [INFO_PACKET] Player %d: stack=%d, bet=%d, status=%d",
@@ -132,31 +132,34 @@ int main(int argc, char **argv)
                              ip->player_status[i]);
                 }
 
-                // 4) community cards, but only as many as have been dealt
-                int num_comm = 0;
-                switch (game.round_stage)
+                // 4) community cards last
+                if (game.round_stage >= ROUND_FLOP)
                 {
-                case ROUND_FLOP:
-                    num_comm = 3;
-                    break;
-                case ROUND_TURN:
-                    num_comm = 4;
-                    break;
-                case ROUND_RIVER:
-                    num_comm = 5;
-                    break;
-                default:
-                    num_comm = 0;
-                    break;
-                }
-                for (int i = 0; i < num_comm; i++)
-                {
-                    log_info("[INFO] [INFO_PACKET] Community Card %d: %s",
-                             i,
-                             card_name(ip->community_cards[i]));
+                    int num_comm = 0;
+                    switch (game.round_stage)
+                    {
+                    case ROUND_FLOP:
+                        num_comm = 3;
+                        break;
+                    case ROUND_TURN:
+                        num_comm = 4;
+                        break;
+                    case ROUND_RIVER:
+                        num_comm = 5;
+                        break;
+                    default:
+                        break;
+                    }
+
+                    for (int i = 0; i < num_comm; i++)
+                    {
+                        log_info("[INFO] [INFO_PACKET] Community Card %d: %s",
+                                 i,
+                                 card_name(ip->community_cards[i]));
+                    }
                 }
 
-                // finally send the packet
+                // Finally send the packet
                 send(game.sockets[p], &sp, sizeof(sp), 0);
             }
 
