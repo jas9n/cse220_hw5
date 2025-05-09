@@ -149,7 +149,7 @@ int server_ready(game_state_t *game)
             if (game->player_status[i] == PLAYER_LEFT || ready[i])
                 continue;
 
-            ssize_t bytes = recv(game->sockets[i], &in, sizeof(in), MSG_DONTWAIT);
+            ssize_t bytes = recv(game->sockets[i], &in, sizeof(in), 0);
             if (bytes > 0)
             {
                 if (in.packet_type == READY)
@@ -182,8 +182,7 @@ int server_ready(game_state_t *game)
                 game->sockets[i] = -1;
             }
         }
-        
-    }
+        }
 
     // Count active players
     int active_players = 0;

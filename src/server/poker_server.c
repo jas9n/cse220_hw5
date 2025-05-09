@@ -103,6 +103,8 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
+    game.round_stage = ROUND_INIT;
+
     // Main game loop
     while (1)
     {
