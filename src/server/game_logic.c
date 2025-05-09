@@ -112,52 +112,90 @@ void reset_game_state(game_state_t *game)
 
 void server_join(game_state_t *game)
 {
-    // This function was called to get the join packets from all players
     client_packet_t in;
+
+    // Wait for JOIN packets from all players
     for (int i = 0; i < game->num_players; i++)
     {
         ssize_t bytes = recv(game->sockets[i], &in, sizeof(in), 0);
         if (bytes <= 0 || in.packet_type != JOIN)
         {
-            // Mark player as left on error
+            // Mark player as left on error or invalid packet
             game->player_status[i] = PLAYER_LEFT;
+            log_info("Player %d failed to join or sent invalid packet. Marked as LEFT.", i);
+
+            // Close the socket for the player who failed to join
+            close(game->sockets[i]);
+            game->sockets[i] = -1;
+        }
+        else
+        {
+            log_info("Player %d successfully joined.", i);
         }
     }
-    game->round_stage = ROUND_INIT;
 }
 
 int server_ready(game_state_t *game)
 {
-    static int first_hand = 1;
-    if (!first_hand)
+    client_packet_t in;
+
+    // Wait for READY or LEAVE packets from all connected players
+    int ready_count = 0;
+    int ready[MAX_PLAYERS] = {0};
+    while (ready_count < game->num_players)
     {
-        game->dealer_player = (game->dealer_player + 1) % game->num_players;
+        for (int i = 0; i < game->num_players; i++)
+        {
+            if (game->player_status[i] == PLAYER_LEFT || ready[i])
+                continue;
+
+            ssize_t bytes = recv(game->sockets[i], &in, sizeof(in), MSG_DONTWAIT);
+            if (bytes > 0)
+            {
+                if (in.packet_type == READY)
+                {
+                    ready[i] = 1;
+                    ready_count++;
+                    log_info("Player %d is READY.", i);
+                }
+                else if (in.packet_type == LEAVE)
+                {
+                    game->player_status[i] = PLAYER_LEFT;
+                    ready[i] = 1;
+                    ready_count++;
+                    log_info("Player %d has LEFT.", i);
+
+                    // Disconnect the socket for the player who left
+                    close(game->sockets[i]);
+                    game->sockets[i] = -1;
+                    log_info("Closed socket for player %d.", i);
+                }
+            }
+            else if (bytes <= 0)
+            {
+                // Handle disconnection as a LEAVE
+                game->player_status[i] = PLAYER_LEFT;
+                ready[i] = 1;
+                ready_count++;
+                log_info("Player %d disconnected. Marked as LEFT.", i);
+                close(game->sockets[i]);
+                game->sockets[i] = -1;
+            }
+        }
+        usleep(1000); // Avoid busy-wait
     }
-    first_hand = 0;
 
     // Count active players
-    int ready_count = 0;
+    int active_players = 0;
     for (int i = 0; i < game->num_players; i++)
     {
         if (game->player_status[i] == PLAYER_ACTIVE)
         {
-            ready_count++;
+            active_players++;
         }
     }
 
-    // Reset bets and pot
-    memset(game->current_bets, 0, sizeof(game->current_bets));
-    game->highest_bet = 0;
-    game->pot_size = 0;
-
-    // Shuffle deck and reset draw index
-    shuffle_deck(game->deck);
-    game->next_card = 0;
-
-    // Advance to dealing stage
-    game->round_stage = ROUND_PREFLOP;
-    game->current_player = (game->dealer_player + 2) % game->num_players;
-    return ready_count;
+    return active_players;
 }
 
 // This was our dealing function with some of the code removed (I left the dealing so we have the same logic)
