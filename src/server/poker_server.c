@@ -498,7 +498,6 @@ int main(int argc, char **argv)
                         }
                     }
                 }
-                usleep(1000); // Avoid busy-wait
             }
 
             // Check if there are enough players to continue

@@ -182,7 +182,7 @@ int server_ready(game_state_t *game)
                 game->sockets[i] = -1;
             }
         }
-        usleep(1000); // Avoid busy-wait
+        
     }
 
     // Count active players
