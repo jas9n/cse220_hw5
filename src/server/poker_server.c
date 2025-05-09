@@ -195,7 +195,13 @@ int main(int argc, char **argv)
         case ROUND_FLOP:
         {
             // Deal 3 community cards
-            deal_community_cards(&game, 3);
+            game.community_cards[0] = game.deck[game.next_card++];
+            game.community_cards[1] = game.deck[game.next_card++];
+            game.community_cards[2] = game.deck[game.next_card++];
+            log_info("Dealt FLOP: %s %s %s",
+                     card_name(game.community_cards[0]),
+                     card_name(game.community_cards[1]),
+                     card_name(game.community_cards[2]));
 
             // Send INFO packets to all active players
             for (int i = 0; i < game.num_players; i++)
@@ -284,7 +290,8 @@ int main(int argc, char **argv)
         case ROUND_TURN:
         {
             // Deal 1 community card
-            deal_community_cards(&game, 1);
+            game.community_cards[3] = game.deck[game.next_card++];
+            log_info("Dealt TURN: %s", card_name(game.community_cards[3]));
 
             // Send INFO packets to all active players
             for (int i = 0; i < game.num_players; i++)
@@ -373,7 +380,8 @@ int main(int argc, char **argv)
         case ROUND_RIVER:
         {
             // Deal 1 community card
-            deal_community_cards(&game, 1);
+            game.community_cards[4] = game.deck[game.next_card++];
+            log_info("Dealt RIVER: %s", card_name(game.community_cards[4]));
 
             // Send INFO packets to all active players
             for (int i = 0; i < game.num_players; i++)
