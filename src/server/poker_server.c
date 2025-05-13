@@ -34,10 +34,11 @@ int main(int argc, char **argv)
     log_init("SERVER");
     log_player_init(MAX_PLAYERS);
 
+    // Seed deck shuffle
     int seed = (argc >= 2) ? atoi(argv[1]) : (int)time(NULL);
     init_game_state(&game, 100, seed);
 
-    // Create and bind sockets for each port
+    // Create and bind sockets
     for (int i = 0; i < NUM_PORTS; i++)
     {
         server_fds[i] = socket(AF_INET, SOCK_STREAM, 0);
@@ -58,7 +59,6 @@ int main(int argc, char **argv)
             perror("bind");
             exit(EXIT_FAILURE);
         }
-
         if (listen(server_fds[i], MAX_PLAYERS) < 0)
         {
             perror("listen");
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
         }
     }
 
-    // Accept connections on all ports
+    // Accept connections
     int player_count = 0;
     for (int port = 0; port < NUM_PORTS; port++)
     {
@@ -80,21 +80,16 @@ int main(int argc, char **argv)
         game.player_status[player_count++] = PLAYER_ACTIVE;
         log_info("Player connected on port %d (socket %d).", BASE_PORT + port, fd);
     }
-
     game.num_players = player_count;
 
-    // Log the number of active players
+    // Log active players
     int active_players = 0;
     for (int i = 0; i < game.num_players; i++)
-    {
         if (game.player_status[i] == PLAYER_ACTIVE)
-        {
             active_players++;
-        }
-    }
     log_info("Number of active players: %d", active_players);
 
-    // Handle JOIN and READY phases
+    // JOIN and READY
     server_join(&game);
     active_players = server_ready(&game);
     if (active_players < 2)
@@ -105,7 +100,7 @@ int main(int argc, char **argv)
 
     game.round_stage = ROUND_INIT;
 
-    // Main game loop
+    // Main loop
     while (1)
     {
         switch (game.round_stage)
@@ -126,7 +121,7 @@ int main(int argc, char **argv)
         case ROUND_TURN:
         case ROUND_RIVER:
         {
-            // Deal community cards if applicable
+            // Deal community cards
             if (game.round_stage == ROUND_FLOP)
             {
                 game.community_cards[0] = game.deck[game.next_card++];
@@ -148,31 +143,34 @@ int main(int argc, char **argv)
                 log_info("Dealt RIVER: %s", card_name(game.community_cards[4]));
             }
 
-            // Send INFO packets to all active players
+            // Broadcast INFO to all
             for (int i = 0; i < game.num_players; i++)
             {
                 if (game.player_status[i] == PLAYER_ACTIVE)
                 {
                     server_packet_t info_pkt;
                     build_info_packet(&game, i, &info_pkt);
-                    if (send(game.sockets[i], &info_pkt, sizeof(info_pkt), 0) > 0)
-                    {
-                        log_info("Sent INFO packet to player %d.", i);
-                    }
-                    else
-                    {
-                        log_err("Failed to send INFO packet to player %d.", i);
-                    }
+                    send(game.sockets[i], &info_pkt, sizeof(info_pkt), 0);
+                    log_info("Sent INFO packet to player %d.", i);
                 }
             }
 
-            // Handle betting round
+            // FIX: enforce full round before breaking on equal bets
+            int still_in = 0;
+            for (int i = 0; i < game.num_players; i++)
+                if (game.player_status[i] == PLAYER_ACTIVE)
+                    still_in++;
+            int actions = 0;
+
+            // Betting loop
             while (1)
             {
+                // Send turn-specific INFO
                 server_packet_t info_pkt;
                 build_info_packet(&game, game.current_player, &info_pkt);
                 send(game.sockets[game.current_player], &info_pkt, sizeof(info_pkt), 0);
 
+                // Receive action
                 client_packet_t in;
                 ssize_t bytes = recv(game.sockets[game.current_player], &in, sizeof(in), 0);
                 if (bytes <= 0)
@@ -188,6 +186,8 @@ int main(int argc, char **argv)
                 if (handle_client_action(&game, game.current_player, &in, &resp) == 0)
                 {
                     send(game.sockets[game.current_player], &resp, sizeof(resp), 0);
+                    if (resp.packet_type == ACK)
+                        actions++;
                 }
                 else
                 {
@@ -196,6 +196,7 @@ int main(int argc, char **argv)
                     continue;
                 }
 
+                // Log state
                 log_info("Game state after action:");
                 log_info("Pot size: %d", game.pot_size);
                 log_info("Highest bet: %d", game.highest_bet);
@@ -205,31 +206,33 @@ int main(int argc, char **argv)
                              i, game.player_stacks[i], game.current_bets[i], game.player_status[i]);
                 }
 
-                int active_players = 0;
-                int all_bets_equal = 1;
+                // Check for showdown
+                still_in = 0;
                 for (int i = 0; i < game.num_players; i++)
-                {
                     if (game.player_status[i] == PLAYER_ACTIVE)
-                    {
-                        active_players++;
-                        if (game.current_bets[i] != game.highest_bet)
-                        {
-                            all_bets_equal = 0;
-                        }
-                    }
-                }
-
-                if (active_players <= 1)
+                        still_in++;
+                if (still_in <= 1)
                 {
                     game.round_stage = ROUND_SHOWDOWN;
                     break;
                 }
 
-                if (all_bets_equal)
+                // Only break if all bets equal AND full rotation
+                int all_equal = 1;
+                for (int i = 0; i < game.num_players; i++)
+                {
+                    if (game.player_status[i] == PLAYER_ACTIVE && game.current_bets[i] != game.highest_bet)
+                    {
+                        all_equal = 0;
+                        break;
+                    }
+                }
+                if (all_equal && actions >= still_in)
                 {
                     break;
                 }
 
+                // Advance turn
                 do
                 {
                     game.current_player = (game.current_player + 1) % game.num_players;
@@ -237,74 +240,71 @@ int main(int argc, char **argv)
                 log_info("Next player turn: %d", game.current_player);
             }
 
+            // Next stage
             game.round_stage++;
             break;
         }
 
-        case ROUND_SHOWDOWN:
+        case ROUND_SHOWDOWN:; // empty statement to allow declarations
+            int still_in;
             server_end(&game);
-
-            int ready_count = 0;
-            int ready[MAX_PLAYERS] = {0};
-            while (ready_count < game.num_players)
             {
-                for (int i = 0; i < game.num_players; i++)
+                int ready_count = 0;
+                int ready[MAX_PLAYERS] = {0};
+                while (ready_count < game.num_players)
                 {
-                    if (game.player_status[i] == PLAYER_LEFT || ready[i])
-                        continue;
-
-                    client_packet_t in;
-                    ssize_t bytes = recv(game.sockets[i], &in, sizeof(in), MSG_DONTWAIT);
-                    if (bytes > 0)
+                    for (int i = 0; i < game.num_players; i++)
                     {
-                        if (in.packet_type == READY)
+                        if (game.player_status[i] == PLAYER_LEFT || ready[i])
+                            continue;
+                        client_packet_t in;
+                        ssize_t bytes = recv(game.sockets[i], &in, sizeof(in), MSG_DONTWAIT);
+                        if (bytes > 0)
                         {
-                            ready[i] = 1;
-                            ready_count++;
-                            log_info("Player %d is READY.", i);
-                        }
-                        else if (in.packet_type == LEAVE)
-                        {
-                            game.player_status[i] = PLAYER_LEFT;
-                            ready[i] = 1;
-                            ready_count++;
-                            log_info("Player %d has LEFT.", i);
-                            close(game.sockets[i]);
-                            game.sockets[i] = -1;
+                            if (in.packet_type == READY)
+                            {
+                                ready[i] = 1;
+                                ready_count++;
+                                log_info("Player %d is READY.", i);
+                            }
+                            else if (in.packet_type == LEAVE)
+                            {
+                                game.player_status[i] = PLAYER_LEFT;
+                                ready[i] = 1;
+                                ready_count++;
+                                log_info("Player %d has LEFT.", i);
+                                close(game.sockets[i]);
+                                game.sockets[i] = -1;
+                            }
                         }
                     }
                 }
-            }
 
-            int active_players = 0;
-            for (int i = 0; i < game.num_players; i++)
-            {
-                if (game.player_status[i] == PLAYER_ACTIVE)
-                {
-                    active_players++;
-                }
-            }
-
-            if (active_players < 2)
-            {
+                // Count remaining
+                still_in = 0;
                 for (int i = 0; i < game.num_players; i++)
-                {
                     if (game.player_status[i] == PLAYER_ACTIVE)
+                        still_in++;
+                if (still_in < 2)
+                {
+                    for (int i = 0; i < game.num_players; i++)
                     {
-                        server_packet_t halt_pkt;
-                        memset(&halt_pkt, 0, sizeof(halt_pkt));
-                        halt_pkt.packet_type = HALT;
-                        send(game.sockets[i], &halt_pkt, sizeof(halt_pkt), 0);
-                        close(game.sockets[i]);
-                        game.sockets[i] = -1;
-                        game.player_status[i] = PLAYER_LEFT;
+                        if (game.player_status[i] == PLAYER_ACTIVE)
+                        {
+                            server_packet_t halt_pkt;
+                            memset(&halt_pkt, 0, sizeof(halt_pkt));
+                            halt_pkt.packet_type = HALT;
+                            send(game.sockets[i], &halt_pkt, sizeof(halt_pkt), 0);
+                            close(game.sockets[i]);
+                            game.player_status[i] = PLAYER_LEFT;
+                        }
                     }
+                    goto cleanup;
                 }
-                goto cleanup;
-            }
 
-            reset_game_state(&game);
-            game.round_stage = ROUND_INIT;
+                reset_game_state(&game);
+                game.round_stage = ROUND_INIT;
+            }
             break;
 
         default:
@@ -316,13 +316,9 @@ cleanup:
     log_info("Cleaning up and shutting down server.");
     log_fini();
     for (int i = 0; i < NUM_PORTS; i++)
-    {
         close(server_fds[i]);
-    }
-    for (int p = 0; p < MAX_PLAYERS; p++)
-    {
-        if (game.sockets[p] >= 0)
-            close(game.sockets[p]);
-    }
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        if (game.sockets[i] >= 0)
+            close(game.sockets[i]);
     return 0;
 }
